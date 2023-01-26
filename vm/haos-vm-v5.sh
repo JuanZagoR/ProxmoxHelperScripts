@@ -55,7 +55,7 @@ function error_exit() {
 }
 function cleanup_vmid() {
   if $(qm status $VMID &>/dev/null); then
-    if [ "$(qm status $VMID | awk '{print $2}')" == "running" ]; then
+    if [ "$(qm status $VMID | awk '{print $2}')" == "Funcionando" ]; then
       qm stop $VMID
     fi
     qm destroy $VMID
@@ -71,7 +71,7 @@ if (whiptail --title "HOME ASSISTANT OS VM" --yesno "Este script creará una nue
     echo "User selected Yes"
 else
     clear
-    echo -e "⚠ User exited script \n"
+    echo -e "⚠ El usuario ha detenido el script \n"
     exit
 fi
 function msg_info() {
@@ -88,9 +88,9 @@ function msg_error() {
 }
 function PVE_CHECK() {
 if [ `pveversion | grep "pve-manager/7.2\|7.3" | wc -l` -ne 1 ]; then
-        echo "⚠ This version of Proxmox Virtual Environment is not supported"
-        echo "Requires PVE Version: =>7.2"
-        echo "Exiting..."
+        echo "⚠ Esta versión de Proxmox no está soportada"
+        echo "Se requiere al menos Proxmox VE Version: =>7.2"
+        echo "Saliendo..."
         sleep 2
         exit
 fi
@@ -98,8 +98,8 @@ fi
 function ARCH_CHECK() {
   ARCH=$(dpkg --print-architecture)
   if [[ "$ARCH" != "amd64" ]]; then
-    echo -e "\n ❌  This script will not work with PiMox! \n"
-    echo -e "Exiting..."
+    echo -e "\n ❌  Este script no funcionará con PiMox \n"
+    echo -e "Saliendo..."
     sleep 2
     exit
   fi
@@ -139,9 +139,9 @@ BRANCH=$(whiptail --title "Versión de HAOS" --radiolist "Escoger Versión" --ca
 3>&1 1>&2 2>&3)
 exitstatus=$?
 if [ $exitstatus = 0 ]; then echo -e "${DGN}Versión de HAOS a usar: ${BGN}$BRANCH${CL}"; fi
-VMID=$(whiptail --inputbox "Ajustar ID de VM" 8 58 $NEXTID --title "VIRTUAL MACHINE ID" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+VMID=$(whiptail --inputbox "Ajustar ID de VM" 8 58 $NEXTID --title "ID de Máquina Virtual" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ -z $VMID ]; then VMID="$NEXTID"; echo -e "${DGN}Virtual Machine: ${BGN}$VMID${CL}";
+if [ -z $VMID ]; then VMID="$NEXTID"; echo -e "${DGN}Máquina Virtual: ${BGN}$VMID${CL}";
   else
     if echo "$USEDID" | egrep -q "$VMID"
     then
@@ -153,104 +153,104 @@ if [ -z $VMID ]; then VMID="$NEXTID"; echo -e "${DGN}Virtual Machine: ${BGN}$VMI
     if [ $exitstatus = 0 ]; then echo -e "${DGN}ID de VM: ${BGN}$VMID${CL}"; fi;
     fi
 fi
-MACH=$(whiptail --title "MACHINE TYPE" --radiolist --cancel-button Exit-Script "Escoger tipo de máquina" 10 58 2 \
-"i440fx" "Machine i440fx" ON \
-"q35" "Machine q35" OFF \
+MACH=$(whiptail --title "Tipo de máquina" --radiolist --cancel-button Exit-Script "Escoger tipo de máquina" 10 58 2 \
+"i440fx" "i440fx" ON \
+"q35" "q35" OFF \
 3>&1 1>&2 2>&3)
 exitstatus=$?
 if [ $MACH = q35 ]; then
-  echo -e "${DGN}Using Machine Type: ${BGN}$MACH${CL}"
+  echo -e "${DGN}Usando tipo de máquina: ${BGN}$MACH${CL}"
   FORMAT=""
   MACHINE=" -machine q35"
   else
-  echo -e "${DGN}Using Machine Type: ${BGN}$MACH${CL}"
+  echo -e "${DGN}Usando tipo de máquina: ${BGN}$MACH${CL}"
   FORMAT=",efitype=4m"
   MACHINE=""
 fi
-VM_NAME=$(whiptail --inputbox "Set Hostname" 8 58 haos${BRANCH} --title "HOSTNAME" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+VM_NAME=$(whiptail --inputbox "Ajustar Hostname" 8 58 haos${BRANCH} --title "HOSTNAME" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ -z $VM_NAME ]; then HN="haos${BRANCH}"; echo -e "${DGN}Using Hostname: ${BGN}$HN${CL}";
+if [ -z $VM_NAME ]; then HN="haos${BRANCH}"; echo -e "${DGN}Usando Hostname: ${BGN}$HN${CL}";
 else
-  if [ $exitstatus = 0 ]; then HN=$(echo ${VM_NAME,,} | tr -d ' '); echo -e "${DGN}Using Hostname: ${BGN}$HN${CL}"; fi;
+  if [ $exitstatus = 0 ]; then HN=$(echo ${VM_NAME,,} | tr -d ' '); echo -e "${DGN}Usando Hostname: ${BGN}$HN${CL}"; fi;
 fi
-CORE_COUNT=$(whiptail --inputbox "Allocate CPU Cores" 8 58 2 --title "CORE COUNT" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+CORE_COUNT=$(whiptail --inputbox "Reservar núcleos" 8 58 2 --title "Número de núcleos" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ -z $CORE_COUNT ]; then CORE_COUNT="2"; echo -e "${DGN}Allocated Cores: ${BGN}$CORE_COUNT${CL}";
+if [ -z $CORE_COUNT ]; then CORE_COUNT="2"; echo -e "${DGN}Núcleos reservados: ${BGN}$CORE_COUNT${CL}";
 else
-  if [ $exitstatus = 0 ]; then echo -e "${DGN}Allocated Cores: ${BGN}$CORE_COUNT${CL}"; fi;
+  if [ $exitstatus = 0 ]; then echo -e "${DGN}Núcleos reservados: ${BGN}$CORE_COUNT${CL}"; fi;
 fi
-RAM_SIZE=$(whiptail --inputbox "Allocate RAM in MiB" 8 58 4096 --title "RAM" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+RAM_SIZE=$(whiptail --inputbox "Memoria RAM reservada (en MiB)" 8 58 4096 --title "RAM" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ -z $RAM_SIZE ]; then RAM_SIZE="4096"; echo -e "${DGN}Allocated RAM: ${BGN}$RAM_SIZE${CL}";
+if [ -z $RAM_SIZE ]; then RAM_SIZE="4096"; echo -e "${DGN}Memoria RAM reservada: ${BGN}$RAM_SIZE${CL}";
 else
-  if [ $exitstatus = 0 ]; then echo -e "${DGN}Allocated RAM: ${BGN}$RAM_SIZE${CL}"; fi;
+  if [ $exitstatus = 0 ]; then echo -e "${DGN}Memoria RAM reservada: ${BGN}$RAM_SIZE${CL}"; fi;
 fi
-BRG=$(whiptail --inputbox "Set a Bridge" 8 58 vmbr0 --title "BRIDGE" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+BRG=$(whiptail --inputbox "Usar Bridge:" 8 58 vmbr0 --title "BRIDGE" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ -z $BRG ]; then BRG="vmbr0"; echo -e "${DGN}Using Bridge: ${BGN}$BRG${CL}";
+if [ -z $BRG ]; then BRG="vmbr0"; echo -e "${DGN}Usando Bridge: ${BGN}$BRG${CL}";
 else
-  if [ $exitstatus = 0 ]; then echo -e "${DGN}Using Bridge: ${BGN}$BRG${CL}"; fi;
+  if [ $exitstatus = 0 ]; then echo -e "${DGN}Usando Bridge: ${BGN}$BRG${CL}"; fi;
 fi
-MAC1=$(whiptail --inputbox "Set a MAC Address" 8 58 $GEN_MAC --title "MAC ADDRESS" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+MAC1=$(whiptail --inputbox "Ajustar dirección MAC" 8 58 $GEN_MAC --title "MAC ADDRESS" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ -z $MAC1 ]; then MAC="$GEN_MAC"; echo -e "${DGN}Using MAC Address: ${BGN}$MAC${CL}";
+if [ -z $MAC1 ]; then MAC="$GEN_MAC"; echo -e "${DGN}Dirección MAC en uso: ${BGN}$MAC${CL}";
 else
- if [ $exitstatus = 0 ]; then MAC="$MAC1"; echo -e "${DGN}Using MAC Address: ${BGN}$MAC1${CL}"; fi
+ if [ $exitstatus = 0 ]; then MAC="$MAC1"; echo -e "${DGN}Dirección MAC en uso: ${BGN}$MAC1${CL}"; fi
 fi
-VLAN1=$(whiptail --inputbox "Set a Vlan(leave blank for default)" 8 58 --title "VLAN" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+VLAN1=$(whiptail --inputbox "Configurar VLAN (dejar en blanco si no se usa)" 8 58 --title "VLAN" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
 if [ $exitstatus = 0 ]; then
   if [ -z $VLAN1 ]; then VLAN1="Default" VLAN="";
-    echo -e "${DGN}Using Vlan: ${BGN}$VLAN1${CL}"
+    echo -e "${DGN}Usando VLAN: ${BGN}$VLAN1${CL}"
 else
     VLAN=",tag=$VLAN1"
-    echo -e "${DGN}Using Vlan: ${BGN}$VLAN1${CL}"
+    echo -e "${DGN}Usando VLAN: ${BGN}$VLAN1${CL}"
   fi  
 fi
-MTU1=$(whiptail --inputbox "Set Interface MTU Size (leave blank for default)" 8 58 --title "MTU SIZE" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+MTU1=$(whiptail --inputbox "Tamaño de MTU a usar (dejar en blanco para usar por defecto" 8 58 --title "MTU SIZE" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
 if [ $exitstatus = 0 ]; then
   if [ -z $MTU1 ]; then
     MTU1="Default" MTU=""
-    echo -e "${DGN}Using Interface MTU Size: ${BGN}$MTU1${CL}"
+    echo -e "${DGN}Tamaño de MTU en uso: ${BGN}$MTU1${CL}"
   else
     MTU=",mtu=$MTU1"
-    echo -e "${DGN}Using Interface MTU Size: ${BGN}$MTU1${CL}"
+    echo -e "${DGN}Tamaño de MTU en uso: ${BGN}$MTU1${CL}"
   fi
 fi
-if (whiptail --title "START VIRTUAL MACHINE" --yesno "Start VM when completed?" 10 58); then
-    echo -e "${DGN}Start VM when completed: ${BGN}yes${CL}"
+if (whiptail --title "Iniciar máquina virtual" --yesno "¿Iniciar VM al completar?" 10 58); then
+    echo -e "${DGN}Iniciar VM al completar: ${BGN}yes${CL}"
     START_VM="yes"
 else
-    echo -e "${DGN}Start VM when completed: ${BGN}no${CL}"
+    echo -e "${DGN}Iniciar VM al completar: ${BGN}no${CL}"
     START_VM="no"
 fi
-if (whiptail --title "ADVANCED SETTINGS COMPLETE" --yesno "Ready to create HAOS ${BRANCH} VM?" --no-button Do-Over 10 58); then
-    echo -e "${RD}Creating a HAOS VM using the above advanced settings${CL}"
+if (whiptail --title "Configuración avanzada completada" --yesno "¿Listo para crear una VM con HAOS ${BRANCH} ?" --no-button Do-Over 10 58); then
+    echo -e "${RD}Creando una VM con la configuración anterior${CL}"
 else
   clear
   header_info
-  echo -e "${RD}Using Advanced Settings${CL}"
+  echo -e "${RD}Usando configuración avanzada${CL}"
   advanced_settings
 fi
 }
 function START_SCRIPT() {
-if (whiptail --title "SETTINGS" --yesno "Use Default Settings?" --no-button Advanced 10 58); then
+if (whiptail --title "Configuración" --yesno "¿Usar configuración por defecto?" --no-button Advanced 10 58); then
   clear
   header_info
-  echo -e "${BL}Using Default Settings${CL}"
+  echo -e "${BL}Usando configuración por defecto${CL}"
   default_settings
 else
   clear
   header_info
-  echo -e "${RD}Using Advanced Settings${CL}"
+  echo -e "${RD}Usando configuración avanzada${CL}"
   advanced_settings
 fi
 }
 ARCH_CHECK
 PVE_CHECK
 START_SCRIPT
-msg_info "Validating Storage"
+msg_info "Validando almacenamiento"
 while read -r line; do
   TAG=$(echo $line | awk '{print $1}')
   TYPE=$(echo $line | awk '{printf "%-10s", $2}')
@@ -264,21 +264,21 @@ STORAGE_MENU+=( "$TAG" "$ITEM" "OFF" )
 done < <(pvesm status -content images | awk 'NR>1')
 VALID=$(pvesm status -content images | awk 'NR>1')
 if [ -z "$VALID" ]; then
-msg_error "Unable to detect a valid storage location."
+msg_error "No se puede detectar un storage pool adecuado."
   exit
 elif [ $((${#STORAGE_MENU[@]}/3)) -eq 1 ]; then
   STORAGE=${STORAGE_MENU[0]}
 else
   while [ -z "${STORAGE:+x}" ]; do
     STORAGE=$(whiptail --title "Storage Pools" --radiolist \
-    "Which storage pool you would like to use for the HAOS VM?\n\n" \
+    "¿Qué storage pool usar para almacenamiento?\n\n" \
     16 $(($MSG_MAX_LENGTH + 23)) 6 \
     "${STORAGE_MENU[@]}" 3>&1 1>&2 2>&3) || exit
   done
 fi
-msg_ok "Using ${CL}${BL}$STORAGE${CL} ${GN}for Storage Location."
-msg_ok "Virtual Machine ID is ${CL}${BL}$VMID${CL}."
-msg_info "Getting URL for Home Assistant ${BRANCH} Disk Image"
+msg_ok "Usando ${CL}${BL}$STORAGE${CL} ${GN} como almacenamiento"
+msg_ok "El ID de VM es ${CL}${BL}$VMID${CL}."
+msg_info "Obteniendo dirección para imagen de disco HAOS ${BRANCH}"
 if [ "$BRANCH" == "$DEV" ]; then 
 URL=https://os-builds.home-assistant.io/${BRANCH}/haos_ova-${BRANCH}.qcow2.xz
 else
@@ -289,8 +289,8 @@ msg_ok "${CL}${BL}${URL}${CL}"
 wget -q --show-progress $URL
 echo -en "\e[1A\e[0K"
 FILE=$(basename $URL)
-msg_ok "Downloaded ${CL}${BL}haos_ova-${BRANCH}.qcow2.xz${CL}"
-msg_info "Extracting KVM Disk Image"
+msg_ok "Descargado ${CL}${BL}haos_ova-${BRANCH}.qcow2.xz${CL}"
+msg_info "Extrayendo imagen de disco KVM"
 unxz $FILE
 STORAGE_TYPE=$(pvesm status -storage $STORAGE | awk 'NR>1 {print $2}')
 case $STORAGE_TYPE in
@@ -313,8 +313,8 @@ for i in {0,1}; do
   eval DISK${i}=vm-${VMID}-disk-${i}${DISK_EXT:-}
   eval DISK${i}_REF=${STORAGE}:${DISK_REF:-}${!disk}
 done
-msg_ok "Extracted KVM Disk Image"
-msg_info "Creating HAOS VM"
+msg_ok "Imagen KVM extraída"
+msg_info "Creando VM Home Assistant OS"
 qm create $VMID -agent 1${MACHINE} -tablet 0 -localtime 1 -bios ovmf -cores $CORE_COUNT -memory $RAM_SIZE \
   -name $HN -net0 virtio,bridge=$BRG,macaddr=$MAC$VLAN$MTU -onboot 1 -ostype l26 -scsihw virtio-scsi-pci
 pvesm alloc $STORAGE $VMID $DISK0 4M 1>&/dev/null
@@ -324,12 +324,12 @@ qm set $VMID \
   -scsi0 ${DISK1_REF},${THIN}size=32G \
   -boot order=scsi0 \
   -description "# Home Assistant OS
-### https://github.com/tteck/Proxmox
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D1D7EP4GF)" >/dev/null
-msg_ok "Created HAOS VM ${CL}${BL}(${HN})"
+### https://github.com/JuanZagoR
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/juanzago)" >/dev/null
+msg_ok "La VM ha sido creada ${CL}${BL}(${HN})"
 if [ "$START_VM" == "yes" ]; then
-msg_info "Starting Home Assistant OS VM"
+msg_info "Iniciando Home Assistant OS VM"
 qm start $VMID
-msg_ok "Started Home Assistant OS VM"
+msg_ok "Home Assistant OS VM Iniciada"
 fi
-msg_ok "Completed Successfully!\n"
+msg_ok "Completado con éxito\n"
