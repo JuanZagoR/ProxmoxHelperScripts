@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 function header_info {
 cat <<"EOF"
-    __  __                        ___              _      __              __     ____  _____
-   / / / /___  ____ ___  ___     /   |  __________(_)____/ /_____ _____v5/ /_   / __ \/ ___/
-  / /_/ / __ \/ __ `__ \/ _ \   / /| | / ___/ ___/ / ___/ __/ __ `/ __ \/ __/  / / / /\__ \ 
- / __  / /_/ / / / / / /  __/  / ___ |(__  |__  ) (__  ) /_/ /_/ / / / / /_   / /_/ /___/ / 
-/_/ /_/\____/_/ /_/ /_/\___/  /_/  |_/____/____/_/____/\__/\__,_/_/ /_/\__/   \____//____/  
+                 //                                                                                                                                   
+         //////////////////                                                                                                                           
+      ////////        ////////                                                                                                                        
+    //////                 /                 ///                                                                             ///                      
+  /////       /////////              //              //        #/             //          //             //          //      ///      //,        //   
+ /////     //////////////       ///////////  ///  ////////  ///////////  ///////////   ///////////  ///////////  //////////  ///   /////////  ////////
+ ////     ////        /////     ///      /// ///  //////   ///      ///  ///      /// ///      ///  ///      // //////////// ///  /////////// //////  
+/////    /////        /////     ///     ///* ///       /// ///     ////  ///     //// ///     ////  ///     ///  ///         ///  ///              ///
+ ////    //////       /////     //////////   ///  ////////   //////////  //////////    ///////////  //////////    /////////  ///   /////////  ////////
+ /////   ////////////////       ///                                      ///                        //                                                
+  /////  //////////////         ///                                      ///                        //                                                
+    //////////             /                                                                                                                          
+      ////////        ////////                                                                                                                        
+         /////    /////////                                                                                                                            
 
 EOF
 }
 clear
 header_info
-echo -e "\n Loading..."
+echo -e "\n Cargando..."
 GEN_MAC=$(echo 'AE 1A 60'$(od -An -N3 -t xC /dev/urandom) | sed -e 's/ /:/g' | tr '[:lower:]' '[:upper:]')
 USEDID=$(pvesh get /cluster/resources --type vm --output-format yaml | egrep -i 'vmid' | awk '{print substr($2, 1, length($2)-0) }')
 NEXTID=$(pvesh get /cluster/nextid)
@@ -42,7 +51,7 @@ trap die ERR
 trap cleanup EXIT
 function error_exit() {
   trap - ERR
-  local reason="Unknown failure occurred."
+  local reason="Fallo desconocido."
   local msg="${1:-$reason}"
   local flag="${RD}‼ ERROR ${CL}$EXIT@$LINE"
   echo -e "$flag $msg" 1>&2
@@ -63,7 +72,7 @@ function cleanup() {
 }
 TEMP_DIR=$(mktemp -d)
 pushd $TEMP_DIR >/dev/null
-if (whiptail --title "HOME ASSISTANT OS VM" --yesno "This will create a New Home Assistant OS VM. Proceed?" 10 58); then
+if (whiptail --title "HOME ASSISTANT OS VM" --yesno "Este script creará una nueva instancia de Home Assistant OS VM. ¿Continuar?" 10 58); then
     echo "User selected Yes"
 else
     clear
@@ -101,55 +110,55 @@ function ARCH_CHECK() {
   fi
 }
 function default_settings() {
-        echo -e "${DGN}Using HAOS Version: ${BGN}${STABLE}${CL}"
+        echo -e "${DGN}Versión de HAOS a usar: ${BGN}${STABLE}${CL}"
         BRANCH=${STABLE}
-        echo -e "${DGN}Using Virtual Machine ID: ${BGN}$NEXTID${CL}"
+        echo -e "${DGN}ID de VM a usar: ${BGN}$NEXTID${CL}"
         VMID=$NEXTID
-        echo -e "${DGN}Using Machine Type: ${BGN}i440fx${CL}"
+        echo -e "${DGN}Tipo de máquina a usar: ${BGN}i440fx${CL}"
         FORMAT=",efitype=4m"
         MACHINE=""
-        echo -e "${DGN}Using Hostname: ${BGN}haos${STABLE}${CL}"
+        echo -e "${DGN}Hostname a usar: ${BGN}haos${STABLE}${CL}"
         HN=haos${STABLE}
-        echo -e "${DGN}Allocated Cores: ${BGN}2${CL}"
+        echo -e "${DGN}Núcleos reservados: ${BGN}2${CL}"
         CORE_COUNT="2"
-        echo -e "${DGN}Allocated RAM: ${BGN}4096${CL}"
+        echo -e "${DGN}Memoria RAM reservada: ${BGN}4096${CL}"
         RAM_SIZE="4096"
-        echo -e "${DGN}Using Bridge: ${BGN}vmbr0${CL}"
+        echo -e "${DGN}Usar Bridge: ${BGN}vmbr0${CL}"
         BRG="vmbr0"
-        echo -e "${DGN}Using MAC Address: ${BGN}$GEN_MAC${CL}"
+        echo -e "${DGN}Dirección MAC a usar: ${BGN}$GEN_MAC${CL}"
         MAC=$GEN_MAC
-        echo -e "${DGN}Using VLAN: ${BGN}Default${CL}"
+        echo -e "${DGN}Usar VLAN: ${BGN}Default${CL}"
         VLAN=""
-        echo -e "${DGN}Using Interface MTU Size: ${BGN}Default${CL}"
+        echo -e "${DGN}Tamaño de MTU a usar: ${BGN}Default${CL}"
         MTU=""
-        echo -e "${DGN}Start VM when completed: ${BGN}yes${CL}"
+        echo -e "${DGN}¿Iniciar al terminar?: ${BGN}yes${CL}"
         START_VM="yes"
-        echo -e "${BL}Creating a HAOS VM using the above default settings${CL}"
+        echo -e "${BL}Creando VM de HAOS con los datos por defecto${CL}"
 }
 function advanced_settings() {
-BRANCH=$(whiptail --title "HAOS VERSION" --radiolist "Choose Version" --cancel-button Exit-Script 10 58 4 \
-"$STABLE" "Stable" ON \
+BRANCH=$(whiptail --title "Versión de HAOS" --radiolist "Escoger Versión" --cancel-button Exit-Script 10 58 4 \
+"$STABLE" "Estable" ON \
 "$BETA" "Beta" OFF \
 "$DEV" "Dev" OFF \
-"$LATEST" "Latest" OFF \
+"$LATEST" "Última" OFF \
 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ $exitstatus = 0 ]; then echo -e "${DGN}Using HAOS Version: ${BGN}$BRANCH${CL}"; fi
-VMID=$(whiptail --inputbox "Set Virtual Machine ID" 8 58 $NEXTID --title "VIRTUAL MACHINE ID" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
+if [ $exitstatus = 0 ]; then echo -e "${DGN}Versión de HAOS a usar: ${BGN}$BRANCH${CL}"; fi
+VMID=$(whiptail --inputbox "Ajustar ID de VM" 8 58 $NEXTID --title "VIRTUAL MACHINE ID" --cancel-button Exit-Script 3>&1 1>&2 2>&3)
 exitstatus=$?
 if [ -z $VMID ]; then VMID="$NEXTID"; echo -e "${DGN}Virtual Machine: ${BGN}$VMID${CL}";
   else
     if echo "$USEDID" | egrep -q "$VMID"
     then
-      echo -e "\n🚨  ${RD}ID $VMID is already in use${CL} \n"
-      echo -e "Exiting Script \n"
+      echo -e "\n🚨  ${RD}El ID $VMID ya está en uso${CL} \n"
+      echo -e "Operación abortada \n"
       sleep 2;
       exit
   else
-    if [ $exitstatus = 0 ]; then echo -e "${DGN}Virtual Machine ID: ${BGN}$VMID${CL}"; fi;
+    if [ $exitstatus = 0 ]; then echo -e "${DGN}ID de VM: ${BGN}$VMID${CL}"; fi;
     fi
 fi
-MACH=$(whiptail --title "MACHINE TYPE" --radiolist --cancel-button Exit-Script "Choose Type" 10 58 2 \
+MACH=$(whiptail --title "MACHINE TYPE" --radiolist --cancel-button Exit-Script "Escoger tipo de máquina" 10 58 2 \
 "i440fx" "Machine i440fx" ON \
 "q35" "Machine q35" OFF \
 3>&1 1>&2 2>&3)
